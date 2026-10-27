@@ -66,6 +66,8 @@ namespace AppCore
         public const string Japanese = "ja";
         public const string Any = "ANY";
 
+        public static bool BypassLanguageCompatibility { get; set; }
+
         public static string Normalize(string language)
         {
             switch (language?.Trim().ToLowerInvariant())
@@ -105,15 +107,27 @@ namespace AppCore
 
         public static bool IsSupportedBy(IEnumerable<string> supportedLanguages, string language)
         {
+            if (BypassLanguageCompatibility)
+            {
+                return true;
+            }
+
             string selectedLanguage = ToModXmlCode(language);
             if (supportedLanguages == null || !supportedLanguages.Any())
             {
                 return selectedLanguage == "EN";
             }
 
-            return supportedLanguages.Any(supportedLanguage =>
-                string.Equals(supportedLanguage?.Trim(), Any, StringComparison.InvariantCultureIgnoreCase)
-                || string.Equals(supportedLanguage?.Trim(), selectedLanguage, StringComparison.InvariantCultureIgnoreCase));
+            return supportedLanguages.Any(supportedLanguage => MatchesLanguage(supportedLanguage, selectedLanguage));
+        }
+
+        public static bool MatchesLanguage(string language, string selectedLanguage)
+        {
+            string normalizedSelectedLanguage = ToModXmlCode(selectedLanguage);
+            string normalizedLanguage = language?.Trim();
+            return string.Equals(normalizedLanguage, Any, StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(normalizedLanguage, "*", StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(normalizedLanguage, normalizedSelectedLanguage, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }
